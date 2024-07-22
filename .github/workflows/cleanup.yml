@@ -1,0 +1,34 @@
+name: Cleanup Job
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Check Git version
+      run: git version
+
+    - name: Override HOME directory
+      run: echo "HOME='/home/runner/work/_temp/b2adf152-fca0-4758-a69c-9d674b111095'" >> $GITHUB_ENV
+
+    - name: Add repository directory to safe directories
+      run: git config --global --add safe.directory ${{ github.workspace }}
+
+    - name: Unset core.sshCommand
+      run: |
+        git config --local --name-only --get-regexp core\.sshCommand
+        git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+
+    - name: Unset http.https://github.com/.extraheader
+      run: |
+        git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+        git config --local --unset-all http.https://github.com/.extraheader
+        git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
